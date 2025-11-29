@@ -200,6 +200,11 @@
         import JSZip from 'jszip';
         import { jsPDF } from 'jspdf';
 
+        // GitHub Pages note: cannot set COOP/COEP headers, so multi-threaded WASM falls back.
+        if (!crossOriginIsolated) {
+            console.warn('Cross-origin isolation not enabled: running background removal in single-threaded mode on GitHub Pages.');
+        }
+
         const upload = document.getElementById('upload');
         const uploadBtn = document.getElementById('uploadBtn');
         const nameInput = document.getElementById('name');
