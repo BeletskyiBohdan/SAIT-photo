@@ -50,13 +50,11 @@ export class ImageProcessor {
         console.log('🔄 [ImageProcessor] Початок видалення фону');
         const downsizedFile = await this.downsizeImage(file);
         console.log(`📊 [ImageProcessor] Оригінал: ${(file.size / 1024 / 1024).toFixed(2)} MB, Після стиснення: ${(downsizedFile.size / 1024 / 1024).toFixed(2)} MB`);
-        
-        this.progressCallback('fetch:model', 0, 100);
         console.log(`⚙️ [ImageProcessor] Режим обробки: ${CONFIG.DEVICE_MODE.toUpperCase()}`);
         
+        // Викликаємо бібліотеку без передачі реального прогресу — використовуємо симуляцію в UI
         const result = await removeBackground(downsizedFile, {
-            device: CONFIG.DEVICE_MODE,
-            progress: this.progressCallback
+            device: CONFIG.DEVICE_MODE
         });
         console.log(`✅ [ImageProcessor] Фон видалено, розмір результату: ${(result.size / 1024 / 1024).toFixed(2)} MB`);
         return result;

@@ -28,6 +28,13 @@ export class UIController {
         this.ctxWeb = this.elements.canvasWeb.getContext('2d');
         this.ctxPrint = this.elements.canvasPrint.getContext('2d');
         console.log('✅ [UIController] Всі елементи UI знайдено та ініціалізовано');
+
+        // Стан симульованого прогресбару
+        this.simProgress = {
+            timerId: null,
+            percent: 0,
+            messageIndex: 0,
+        };
     }
 
     showStep(step) {
@@ -73,5 +80,52 @@ export class UIController {
 
     getUserPosition() {
         return this.elements.positionSelect.selectedIndex;
+    }
+
+    // Симульований прогресбар на 5 хвилин з кроком 1%/3с та стопом на 99%
+    startSimulatedProgress() {
+        console.log('⏳ [UIController] Старт симульованого прогресу');
+        // Показати екран прогресу (крок 1_5 має бути активований ззовні)
+        this.simProgress.percent = 0;
+        this.simProgress.messageIndex = 0;
+        this._renderProgress(this.simProgress.percent, CONFIG.PROGRESS_MESSAGES[0]);
+
+        if (this.simProgress.timerId) {
+            clearInterval(this.simProgress.timerId);
+        }
+
+        this.simProgress.timerId = setInterval(() => {
+            if (this.simProgress.percent >= CONFIG.PROGRESS.MAX_SIM_PERCENT) {
+                // Зупиняємося на 99% і чекаємо завершення реального процесу
+                return;
+            }
+            this.simProgress.percent += 1;
+            this.simProgress.messageIndex = (this.simProgress.messageIndex + 1) % CONFIG.PROGRESS_MESSAGES.length;
+            const msg = CONFIG.PROGRESS_MESSAGES[this.simProgress.messageIndex];
+            this._renderProgress(this.simProgress.percent, msg);
+        }, CONFIG.PROGRESS.TICK_MS);
+    }
+
+    // Миттєво сховати прогресбар (коли процеси завершені раніше)
+    finishSimulatedProgress() {
+        console.log('✅ [UIController] Завершення симульованого прогресу');
+        if (this.simProgress.timerId) clearInterval(this.simProgress.timerId);
+        this.simProgress.timerId = null;
+        this.resetProgress();
+    }
+
+    // Зупинити і скинути без зміни кроку (для обробки помилки)
+    stopSimulatedProgress() {
+        console.log('🛑 [UIController] Зупинка симульованого прогресу');
+        if (this.simProgress.timerId) clearInterval(this.simProgress.timerId);
+        this.simProgress.timerId = null;
+        this.resetProgress();
+    }
+
+    _renderProgress(percent, message) {
+        this.elements.progressBar.style.width = percent + '%';
+        this.elements.progressPercent.textContent = percent + '%';
+        this.elements.loadingStage.textContent = message;
+        console.log(`📊 [UIController] Прогрес: ${percent}% — ${message}`);
     }
 }

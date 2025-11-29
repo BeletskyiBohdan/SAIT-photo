@@ -76,15 +76,18 @@ export class App {
         try {
             console.log('🔄 [App] Початок обробки фото');
             this.ui.showStep('1_5');
+            this.ui.startSimulatedProgress();
             
             // Завантажуємо модель перед обробкою
             await preloadModel();
             
             this.state.processedBlob = await this.imageProcessor.removeBackground(file);
             console.log('✅ [App] Фон успішно видалено');
+            this.ui.finishSimulatedProgress();
             this.ui.showStep(2);
         } catch (error) {
             console.error('❌ [App] Помилка обробки:', error);
+            this.ui.stopSimulatedProgress();
             alert('Сталася помилка під час обробки зображення.');
             this.ui.showStep(1);
         }
