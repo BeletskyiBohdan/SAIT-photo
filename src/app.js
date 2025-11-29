@@ -23,7 +23,6 @@ export class App {
 
     async initialize() {
         console.log('⚙️ [App] Початок ініціалізації додатку');
-        await preloadModel();
         this.attachEventListeners();
         console.log('✅ [App] Додаток готовий до роботи');
     }
@@ -77,6 +76,10 @@ export class App {
         try {
             console.log('🔄 [App] Початок обробки фото');
             this.ui.showStep('1_5');
+            
+            // Завантажуємо модель перед обробкою
+            await preloadModel();
+            
             this.state.processedBlob = await this.imageProcessor.removeBackground(file);
             console.log('✅ [App] Фон успішно видалено');
             this.ui.showStep(2);
