@@ -134,7 +134,7 @@
         <div id="step1_5" class="step">
             <div class="loading-wrapper">
                 <div class="spinner" aria-label="loading"></div>
-                <div class="loading-label">Ваше фото завантажується…</div>
+                <div class="loading-label">Ваше фото обробляється...</div>
             </div>
         </div>
 
@@ -200,10 +200,63 @@
         import JSZip from 'jszip';
         import { jsPDF } from 'jspdf';
 
+        // Register service worker for caching WASM and assets
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/SAIT-photo/sw.js').then(() => {
+                console.log('Service Worker registered for caching');
+            }).catch((err) => {
+                console.log('Service Worker registration failed:', err);
+            });
+        }
+
         // GitHub Pages note: cannot set COOP/COEP headers, so multi-threaded WASM falls back.
         // Using WebGPU acceleration when available for better performance.
         if (!crossOriginIsolated) {
             console.info('Cross-origin isolation not enabled. Using WebGPU acceleration for faster processing on GitHub Pages.');
+        }
+
+        // Preload WASM model immediately on page load for faster first-time processing
+        (async () => {
+            try {
+                console.log('Preloading background removal model...');
+                await removeBackground(new Blob([new Uint8Array(1)], { type: 'image/png' }), {
+                    device: 'webgpu'
+                }).catch(() => {});
+                console.log('Model preloaded successfully');
+            } catch (e) {
+                console.log('Model preload skipped');
+            }
+        })();
+
+        // Helper function to downsize image if too large
+        async function downsizeImage(file, maxHeight = 1748) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                img.onload = () => {
+                    let { width, height } = img;
+                    
+                    // Only downsize if height exceeds limit
+                    if (height > maxHeight) {
+                        const scale = maxHeight / height;
+                        width = Math.round(width * scale);
+                        height = maxHeight;
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    canvas.toBlob((blob) => {
+                        resolve(blob || file);
+                    }, file.type || 'image/jpeg', 0.92);
+                };
+                
+                img.onerror = () => resolve(file);
+                img.src = URL.createObjectURL(file);
+            });
         }
 
         const upload = document.getElementById('upload');
@@ -253,8 +306,13 @@
             try {
                 // Show loading step while processing background removal
                 showStep('1_5');
+                
+                // Downsize image if height exceeds 1748px before processing
+                const downsizedFile = await downsizeImage(file, 1748);
+                console.log(`Original: ${file.size} bytes, Downsized: ${downsizedFile.size} bytes`);
+                
                 // Use WebGPU when available for faster processing without threads
-                resultBlob = await removeBackground(file, {
+                resultBlob = await removeBackground(downsizedFile, {
                     device: 'webgpu',  // Try GPU first, falls back to WASM if unavailable
                     progress: (key, current, total) => {
                         console.log(`${key}: ${current}/${total}`);
