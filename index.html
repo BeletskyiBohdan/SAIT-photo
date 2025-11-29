@@ -220,7 +220,7 @@
             try {
                 console.log('Preloading background removal model...');
                 await removeBackground(new Blob([new Uint8Array(1)], { type: 'image/png' }), {
-                    device: 'webgpu'
+                    device: 'gpu'
                 }).catch(() => {});
                 console.log('Model preloaded successfully');
             } catch (e) {
@@ -243,15 +243,18 @@
                         const scale = maxHeight / height;
                         width = Math.round(width * scale);
                         height = maxHeight;
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        canvas.toBlob((blob) => {
+                            resolve(blob || file);
+                        }, 'image/jpeg', 0.85);
+                    } else {
+                        // No downsizing needed, return original
+                        resolve(file);
                     }
-                    
-                    canvas.width = width;
-                    canvas.height = height;
-                    ctx.drawImage(img, 0, 0, width, height);
-                    
-                    canvas.toBlob((blob) => {
-                        resolve(blob || file);
-                    }, file.type || 'image/jpeg', 0.92);
                 };
                 
                 img.onerror = () => resolve(file);
@@ -311,9 +314,9 @@
                 const downsizedFile = await downsizeImage(file, 1748);
                 console.log(`Original: ${file.size} bytes, Downsized: ${downsizedFile.size} bytes`);
                 
-                // Use WebGPU when available for faster processing without threads
+                // Use GPU when available for faster processing without threads
                 resultBlob = await removeBackground(downsizedFile, {
-                    device: 'webgpu',  // Try GPU first, falls back to WASM if unavailable
+                    device: 'gpu',  // GPU acceleration, falls back to CPU if unavailable
                     progress: (key, current, total) => {
                         console.log(`${key}: ${current}/${total}`);
                     }
