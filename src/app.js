@@ -5,7 +5,6 @@ import { ImageProcessor } from './imageProcessor.js';
 import { CropperManager } from './cropper.js';
 import { ExportManager } from './export.js';
 import { CONFIG } from './config.js';
-import { registerServiceWorker, logCrossOriginStatus } from './serviceWorker.js';
 import { preloadModel } from './preload.js';
 
 export class App {
@@ -21,8 +20,6 @@ export class App {
     }
 
     async initialize() {
-        registerServiceWorker();
-        logCrossOriginStatus();
         await preloadModel();
         this.attachEventListeners();
     }

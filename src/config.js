@@ -19,7 +19,6 @@ export const CONFIG = {
         'decode:image': 'Розпакування фотографії...'
     },
     
-    SERVICE_WORKER_PATH: '/SAIT-photo/sw.js',
     DEVICE_MODE: 'cpu',
     DOWNSIZE_QUALITY: 0.85,
     EXPORT_JPG_QUALITY: 0.9
