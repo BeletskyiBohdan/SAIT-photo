@@ -1,0 +1,100 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f5f5f5;
+}
+
+@import './loading.css';
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: white;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 30px;
+}
+
+.step {
+    display: none;
+}
+
+.step.active {
+    display: block;
+}
+
+.control-group {
+    margin: 20px 0;
+}
+
+label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+select, input[type="text"], input[type="file"] {
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    width: 300px;
+    max-width: 100%;
+}
+
+button {
+    padding: 12px 30px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    margin: 10px;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+#output {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+#imageContainer, #imageContainer2 {
+    max-width: 800px;
+    max-height: 600px;
+    overflow: auto;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin: 0 auto;
+}
+
+#imageContainer img, #imageContainer2 img {
+    max-width: 100%;
+    height: auto;
+}
+
+canvas {
+    max-width: 800px;
+    max-height: 600px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.message {
+    font-size: 20px;
+    color: #28a745;
+    margin: 20px 0;
+}
