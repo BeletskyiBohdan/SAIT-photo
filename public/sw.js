@@ -1,5 +1,5 @@
 // Service Worker for caching WASM and static assets
-const CACHE_NAME = 'sait-photo-v1';
+const CACHE_NAME = 'sait-photo-v2';  // Increment version to force cache refresh
 const ASSETS_TO_CACHE = [
   '/SAIT-photo/',
   '/SAIT-photo/index.html'
