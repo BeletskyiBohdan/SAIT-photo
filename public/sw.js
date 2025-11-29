@@ -1,5 +1,5 @@
 // Service Worker for caching WASM and static assets
-const CACHE_NAME = 'sait-photo-v2';  // Increment version to force cache refresh
+const CACHE_NAME = 'sait-photo-v3';  // Increment version to force cache refresh
 const ASSETS_TO_CACHE = [
   '/SAIT-photo/',
   '/SAIT-photo/index.html'
@@ -37,6 +37,11 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
+
+  // Skip non-http(s) schemes (chrome-extension, data:, etc.)
+  if (!url.protocol.startsWith('http')) {
+    return;
+  }
 
   // Cache WASM, JS bundles, and other static assets aggressively
   if (
