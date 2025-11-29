@@ -1,11 +1,11 @@
+@import './loading.css';
+
 body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 20px;
     background-color: #f5f5f5;
 }
-
-@import './loading.css';
 
 .container {
     max-width: 1200px;
