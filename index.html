@@ -102,6 +102,40 @@
         .loading-label {
             font-size: 18px;
             color: #333;
+            font-weight: bold;
+        }
+        .loading-stage {
+            font-size: 14px;
+            color: #666;
+            margin-top: 4px;
+        }
+        .progress-container {
+            width: 400px;
+            max-width: 90%;
+            margin: 16px 0;
+        }
+        .progress-bar-bg {
+            width: 100%;
+            height: 24px;
+            background-color: #e6e6e6;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #007bff 0%, #0056b3 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+        }
+        .progress-percent {
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
         }
         .spinner {
             width: 56px;
@@ -134,7 +168,15 @@
         <div id="step1_5" class="step">
             <div class="loading-wrapper">
                 <div class="spinner" aria-label="loading"></div>
-                <div class="loading-label">Ваше фото обробляється...</div>
+                <div class="loading-label" id="loadingLabel">Ваше фото обробляється...</div>
+                <div class="loading-stage" id="loadingStage">Підготовка...</div>
+                <div class="progress-container">
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="progressBar">
+                            <span class="progress-percent" id="progressPercent">0%</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -278,6 +320,28 @@
         const canvasPrint = document.getElementById('canvasPrint');
         const ctxWeb = canvasWeb.getContext('2d');
         const ctxPrint = canvasPrint.getContext('2d');
+        const progressBar = document.getElementById('progressBar');
+        const progressPercent = document.getElementById('progressPercent');
+        const loadingStage = document.getElementById('loadingStage');
+
+        const stageNames = {
+            'compute:inference': 'Аналіз зображення...',
+            'compute:onnx': 'Обробка нейромережею...',
+            'encode:png': 'Збереження результату...',
+            'fetch:model': 'Завантаження моделі...',
+            'decode:image': 'Розпакування фотографії...'
+        };
+
+        function updateProgress(key, current, total) {
+            const percent = Math.round((current / total) * 100);
+            progressBar.style.width = percent + '%';
+            progressPercent.textContent = percent + '%';
+            
+            const stageName = stageNames[key] || `${key}: ${current}/${total}`;
+            loadingStage.textContent = stageName;
+            
+            console.log(`${key}: ${current}/${total} (${percent}%)`);
+        }
 
         const positions = ['викладач', 'асистент', 'аспірант'];
         const shortPositions = ['викл.', 'ас.', 'асп.'];
@@ -314,12 +378,13 @@
                 const downsizedFile = await downsizeImage(file, 1748);
                 console.log(`Original: ${file.size} bytes, Downsized: ${downsizedFile.size} bytes`);
                 
+                // Reset progress
+                updateProgress('fetch:model', 0, 100);
+                
                 // Use GPU when available for faster processing without threads
                 resultBlob = await removeBackground(downsizedFile, {
                     device: 'gpu',  // GPU acceleration, falls back to CPU if unavailable
-                    progress: (key, current, total) => {
-                        console.log(`${key}: ${current}/${total}`);
-                    }
+                    progress: updateProgress
                 });
                 showStep(2);
             } catch (error) {
@@ -461,6 +526,9 @@
             croppedPrintCanvas = null;
             imageContainer.innerHTML = '';
             imageContainer2.innerHTML = '';
+            progressBar.style.width = '0%';
+            progressPercent.textContent = '0%';
+            loadingStage.textContent = 'Підготовка...';
             showStep(1);
         });
     </script>
