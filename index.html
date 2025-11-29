@@ -252,9 +252,9 @@
         }
 
         // GitHub Pages note: cannot set COOP/COEP headers, so multi-threaded WASM falls back.
-        // Using WebGPU acceleration when available for better performance.
+        // Using CPU mode for more reliable loading on GitHub Pages.
         if (!crossOriginIsolated) {
-            console.info('Cross-origin isolation not enabled. Using WebGPU acceleration for faster processing on GitHub Pages.');
+            console.info('Cross-origin isolation not enabled. Using single-threaded CPU mode on GitHub Pages.');
         }
 
         // Preload WASM model immediately on page load for faster first-time processing
@@ -262,7 +262,7 @@
             try {
                 console.log('Preloading background removal model...');
                 await removeBackground(new Blob([new Uint8Array(1)], { type: 'image/png' }), {
-                    device: 'gpu'
+                    device: 'cpu'
                 }).catch(() => {});
                 console.log('Model preloaded successfully');
             } catch (e) {
@@ -381,9 +381,9 @@
                 // Reset progress
                 updateProgress('fetch:model', 0, 100);
                 
-                // Use GPU when available for faster processing without threads
+                // Use CPU mode for reliable processing
                 resultBlob = await removeBackground(downsizedFile, {
-                    device: 'gpu',  // GPU acceleration, falls back to CPU if unavailable
+                    device: 'cpu',
                     progress: updateProgress
                 });
                 showStep(2);
