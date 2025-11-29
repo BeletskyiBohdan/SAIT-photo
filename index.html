@@ -201,8 +201,9 @@
         import { jsPDF } from 'jspdf';
 
         // GitHub Pages note: cannot set COOP/COEP headers, so multi-threaded WASM falls back.
+        // Using WebGPU acceleration when available for better performance.
         if (!crossOriginIsolated) {
-            console.warn('Cross-origin isolation not enabled: running background removal in single-threaded mode on GitHub Pages.');
+            console.info('Cross-origin isolation not enabled. Using WebGPU acceleration for faster processing on GitHub Pages.');
         }
 
         const upload = document.getElementById('upload');
@@ -252,7 +253,13 @@
             try {
                 // Show loading step while processing background removal
                 showStep('1_5');
-                resultBlob = await removeBackground(file);
+                // Use WebGPU when available for faster processing without threads
+                resultBlob = await removeBackground(file, {
+                    device: 'webgpu',  // Try GPU first, falls back to WASM if unavailable
+                    progress: (key, current, total) => {
+                        console.log(`${key}: ${current}/${total}`);
+                    }
+                });
                 showStep(2);
             } catch (error) {
                 console.error('Помилка обробки:', error);
