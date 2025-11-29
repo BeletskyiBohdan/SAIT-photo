@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Обробка фотографій портретів</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        label {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        select, input, button {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #customSize {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        #output {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        #imageContainer {
+            max-width: 800px;
+            max-height: 600px;
+            overflow: auto;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #imageContainer img {
+            max-width: 100%;
+            height: auto;
+        }
+        canvas {
+            max-width: 800px;
+            max-height: 600px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs/dist/cropper.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Обробка фотографій портретів</h1>
+        <div class="controls">
+            <div class="control-group">
+                <label for="upload">Виберіть файл:</label>
+                <input type="file" id="upload" accept="image/*">
+            </div>
+            <div class="control-group">
+                <label for="name">Ім'я:</label>
+                <input type="text" id="name" placeholder="Введіть ім'я">
+            </div>
+            <div class="control-group">
+                <label for="position">Посада:</label>
+                <select id="position">
+                    <option value="викладач">Викладач</option>
+                    <option value="асистент">Асистент</option>
+                    <option value="аспірант">Аспірант</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="sizeSelect">Розмір:</label>
+                <select id="sizeSelect">
+                    <option value="site">Для сайту (360×500 px)</option>
+                    <option value="print">Для друку (105×148 мм)</option>
+                    <option value="custom">Користувацький</option>
+                </select>
+            </div>
+        </div>
+        <div id="customSize" style="display: none; justify-content: center; margin-bottom: 20px;">
+            Ширина: <input id="width" type="number" min="1"> 
+            <select id="unit">
+                <option value="px">px</option>
+                <option value="mm">mm</option>
+            </select>
+            Висота: <input id="height" type="number" min="1"> 
+            <select id="unit2">
+                <option value="px">px</option>
+                <option value="mm">mm</option>
+            </select>
+        </div>
+        <div class="controls">
+            <button id="process">Обробити</button>
+            <button id="applySize" style="display: none;">Застосувати розмір</button>
+            <button id="download" style="display: none;">Завантажити</button>
+        </div>
+        <div id="output">
+            <canvas id="canvas"></canvas>
+            <div id="imageContainer" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { removeBackground } from '@imgly/background-removal';
+        import Cropper from 'cropperjs';
+
+        const upload = document.getElementById('upload');
+        const nameInput = document.getElementById('name');
+        const positionSelect = document.getElementById('position');
+        const sizeSelect = document.getElementById('sizeSelect');
+        const customSize = document.getElementById('customSize');
+        const widthInput = document.getElementById('width');
+        const heightInput = document.getElementById('height');
+        const unitSelect = document.getElementById('unit');
+        const unit2Select = document.getElementById('unit2');
+        const processBtn = document.getElementById('process');
+        const applySizeBtn = document.getElementById('applySize');
+        const downloadBtn = document.getElementById('download');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const imageContainer = document.getElementById('imageContainer');
+
+        const positions = ['викладач', 'асистент', 'аспірант'];
+        const shortPositions = ['викл.', 'ас.', 'асп.'];
+        const bgColors = ['#3C60AA', '#ACD6F3', '#8CB8E4'];
+
+        let resultImg = null;
+        let processed = false;
+        let cropper = null;
+        let croppedCanvas = null;
+
+        sizeSelect.addEventListener('change', () => {
+            if (sizeSelect.value === 'custom') {
+                customSize.style.display = 'block';
+            } else {
+                customSize.style.display = 'none';
+            }
+            if (cropper) {
+                cropper.setAspectRatio(getAspect());
+            }
+        });
+
+        function getAspect() {
+            if (sizeSelect.value === 'site') return 360 / 500;
+            if (sizeSelect.value === 'print') return 105 / 148;
+            if (sizeSelect.value === 'custom') {
+                const w = parseInt(widthInput.value) || 1;
+                const h = parseInt(heightInput.value) || 1;
+                return w / h;
+            }
+            return NaN;
+        }
+
+        function getTargetSize() {
+            let width, height, isPrint = false;
+            if (sizeSelect.value === 'site') {
+                width = 360;
+                height = 500;
+            } else if (sizeSelect.value === 'print') {
+                // 105x148 mm at 300 DPI
+                width = Math.round((105 / 25.4) * 300);
+                height = Math.round((148 / 25.4) * 300);
+                isPrint = true;
+            } else if (sizeSelect.value === 'custom') {
+                width = parseInt(widthInput.value);
+                height = parseInt(heightInput.value);
+                if (unitSelect.value === 'mm') {
+                    width = Math.round((width / 25.4) * 300);
+                    height = Math.round((height / 25.4) * 300);
+                    isPrint = true;
+                }
+            }
+            return { width, height, isPrint };
+        }
+
+        processBtn.addEventListener('click', async () => {
+            const file = upload.files[0];
+            if (!file) {
+                alert('Будь ласка, виберіть файл.');
+                return;
+            }
+
+            const img = new Image();
+            img.onload = async () => {
+                try {
+                    const resultBlob = await removeBackground(file);
+                    resultImg = new Image();
+                    resultImg.onload = () => {
+                        // Hide canvas, show container
+                        canvas.style.display = 'none';
+                        imageContainer.style.display = 'block';
+                        imageContainer.innerHTML = '';
+                        const imgElement = document.createElement('img');
+                        imgElement.src = URL.createObjectURL(resultBlob);
+                        imgElement.style.maxWidth = '100%';
+                        imgElement.onload = () => {
+                            cropper = new Cropper(imgElement, {
+                                aspectRatio: getAspect(),
+                                viewMode: 1,
+                                autoCropArea: 0.8,
+                                zoomable: false,
+                                scalable: false,
+                                rotatable: false,
+                            });
+                        };
+                        imageContainer.appendChild(imgElement);
+                        processed = true;
+                        applySizeBtn.style.display = 'inline';
+                        applySizeBtn.textContent = 'Обрізати';
+                        downloadBtn.style.display = 'none';
+                    };
+                    resultImg.src = URL.createObjectURL(resultBlob);
+                } catch (error) {
+                    console.error('Помилка обробки:', error);
+                    alert('Сталася помилка під час обробки зображення.');
+                }
+            };
+            img.src = URL.createObjectURL(file);
+        });
+
+        applySizeBtn.addEventListener('click', () => {
+            if (applySizeBtn.textContent === 'Обрізати') {
+                // Crop
+                if (!cropper) return;
+                croppedCanvas = cropper.getCroppedCanvas();
+                canvas.width = croppedCanvas.width;
+                canvas.height = croppedCanvas.height;
+                ctx.drawImage(croppedCanvas, 0, 0);
+                imageContainer.style.display = 'none';
+                canvas.style.display = 'block';
+                cropper.destroy();
+                cropper = null;
+                applySizeBtn.textContent = 'Застосувати розмір';
+            } else {
+                // Apply size
+                const { width: targetWidth, height: targetHeight } = getTargetSize();
+                canvas.width = targetWidth;
+                canvas.height = targetHeight;
+                const posIndex = positionSelect.selectedIndex;
+                const bgColor = bgColors[posIndex];
+                ctx.fillStyle = bgColor;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                if (croppedCanvas) {
+                    ctx.drawImage(croppedCanvas, 0, 0, targetWidth, targetHeight);
+                }
+                downloadBtn.style.display = 'inline';
+            }
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            const name = nameInput.value.trim();
+            if (!name) {
+                alert('Будь ласка, введіть ім\'я.');
+                return;
+            }
+            const posIndex = positionSelect.selectedIndex;
+            const shortPos = shortPositions[posIndex];
+            const { isPrint } = getTargetSize();
+            const type = isPrint ? 'на друк' : 'на сайт';
+            const filename = `${shortPos} ${name} - ${type}`;
+            const mime = isPrint ? 'image/jpeg' : 'image/png';
+            const quality = isPrint ? 0.9 : undefined;
+            const link = document.createElement('a');
+            link.download = `${filename}.${isPrint ? 'jpg' : 'png'}`;
+            link.href = canvas.toDataURL(mime, quality);
+            link.click();
+        });
+    </script>
+</body>
+</html>

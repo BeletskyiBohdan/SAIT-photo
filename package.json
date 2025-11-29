@@ -1,0 +1,15 @@
+{
+  "dependencies": {
+    "@imgly/background-removal": "^1.7.0",
+    "cropperjs": "^1.6.1",
+    "jspdf": "^3.0.4",
+    "jszip": "^3.10.1"
+  },
+  "devDependencies": {
+    "vite": "^4.0.0"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "vite"
+  }
+}

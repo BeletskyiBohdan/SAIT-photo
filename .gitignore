@@ -1,0 +1,21 @@
+# Node / Vite
+node_modules/
+.vite/
+.DS_Store
+Thumbs.db
+npm-debug.log*
+yarn-error.log
+pnpm-debug.log
+
+# Build / Output
+/dist/
+/build/
+*.zip
+
+# Environment / Misc
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
