@@ -3,6 +3,7 @@ import { CONFIG } from './config.js';
 
 export class UIController {
     constructor() {
+        console.log('🎨 [UIController] Ініціалізація UI контролера');
         this.elements = {
             steps: document.querySelectorAll('.step'),
             upload: document.getElementById('upload'),
@@ -26,9 +27,11 @@ export class UIController {
         
         this.ctxWeb = this.elements.canvasWeb.getContext('2d');
         this.ctxPrint = this.elements.canvasPrint.getContext('2d');
+        console.log('✅ [UIController] Всі елементи UI знайдено та ініціалізовано');
     }
 
     showStep(step) {
+        console.log(`📄 [UIController] Перехід на крок: ${step}`);
         this.elements.steps.forEach(s => s.classList.remove('active'));
         document.getElementById(`step${step}`).classList.add('active');
     }
@@ -45,17 +48,20 @@ export class UIController {
     }
 
     resetProgress() {
+        console.log('🔄 [UIController] Скидання прогресу');
         this.elements.progressBar.style.width = '0%';
         this.elements.progressPercent.textContent = '0%';
         this.elements.loadingStage.textContent = 'Підготовка...';
     }
 
     clearContainers() {
+        console.log('🧹 [UIController] Очищення контейнерів зображень');
         this.elements.imageContainer.innerHTML = '';
         this.elements.imageContainer2.innerHTML = '';
     }
 
     resetInputs() {
+        console.log('🔄 [UIController] Скидання полів вводу');
         this.elements.upload.value = '';
         this.elements.nameInput.value = '';
         this.elements.positionSelect.selectedIndex = 0;

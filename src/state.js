@@ -1,6 +1,7 @@
 // Application State Management
 export class AppState {
     constructor() {
+        console.log('📦 [AppState] Ініціалізація стану додатку');
         this.currentStep = 1;
         this.uploadedFile = null;
         this.processedBlob = null;
@@ -13,6 +14,7 @@ export class AppState {
     }
 
     reset() {
+        console.log('🔄 [AppState] Скидання стану додатку');
         this.currentStep = 1;
         this.uploadedFile = null;
         this.processedBlob = null;
@@ -24,5 +26,6 @@ export class AppState {
         this.croppedPrintCanvas = null;
         this.userName = '';
         this.userPosition = 0;
+        console.log('✅ [AppState] Стан скинуто');
     }
 }
