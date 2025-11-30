@@ -84,13 +84,14 @@ export class UIController {
         return this.elements.positionSelect.selectedIndex;
     }
 
-    // Симульований прогресбар: відсоток +1% кожні 3с, повідомлення кожні 5%, стоп на 99%
-    // Приймає опціональний колбек для перевірки завершення процесу кожні 8%
+    // Симульований прогресбар з формулою P(t) = 100 * (1 - ((300-t)/300)^2)
+    // Перевірка завершення процесу кожну секунду
     startSimulatedProgress(checkCompletionCallback = null) {
         console.log('⏳ [UIController] Старт симульованого прогресу');
         this.simProgress.percent = 0;
         this.simProgress.messageIndex = 0;
         this.simProgress.checkCompletionCallback = checkCompletionCallback;
+        this.simProgress.startTime = Date.now();
         this._renderProgress(0, CONFIG.PROGRESS_MESSAGES[0]);
 
         if (this.simProgress.timerId) {
@@ -99,21 +100,27 @@ export class UIController {
         this._clear99Timers();
 
         this.simProgress.timerId = setInterval(() => {
+            // Обчислюємо час у секундах з початку
+            const elapsedSeconds = (Date.now() - this.simProgress.startTime) / 1000;
+            
+            // Формула: P(t) = 100 * (1 - ((300-t)/300)^2)
+            const maxTime = CONFIG.PROGRESS.DURATION_MS / 1000; // 300 секунд
+            const rawPercent = 100 * (1 - Math.pow((maxTime - elapsedSeconds) / maxTime, 2));
+            
+            // Обмежуємо до 99%
+            this.simProgress.percent = Math.min(Math.floor(rawPercent), CONFIG.PROGRESS.MAX_SIM_PERCENT);
+            
             if (this.simProgress.percent >= CONFIG.PROGRESS.MAX_SIM_PERCENT) {
                 // Досягли 99% — запускаємо спеціальні повідомлення
                 if (this.simProgress.at99Timers.length === 0) {
                     this._start99Messages();
                 }
-                return;
             }
             
-            this.simProgress.percent += 1;
-            
-            // Перевіряємо завершення процесу кожні 8%
-            if (this.simProgress.percent % 8 === 0 && this.simProgress.checkCompletionCallback) {
-                console.log(`🔍 [UIController] Перевірка завершення процесу на ${this.simProgress.percent}%`);
+            // Перевіряємо завершення процесу щосекунди
+            if (this.simProgress.checkCompletionCallback) {
                 if (this.simProgress.checkCompletionCallback()) {
-                    console.log('✅ [UIController] Процес завершено достроково, зупинка прогресбару');
+                    console.log(`✅ [UIController] Процес завершено на ${this.simProgress.percent}%, зупинка прогресбару`);
                     this.finishSimulatedProgress();
                     return;
                 }
@@ -122,15 +129,20 @@ export class UIController {
             // Змінюємо повідомлення тільки кожні 5%
             let msg;
             if (this.simProgress.percent % CONFIG.PROGRESS.MESSAGE_CHANGE_PERCENT === 0) {
-                this.simProgress.messageIndex = Math.floor(this.simProgress.percent / CONFIG.PROGRESS.MESSAGE_CHANGE_PERCENT) % CONFIG.PROGRESS_MESSAGES.length;
-                msg = CONFIG.PROGRESS_MESSAGES[this.simProgress.messageIndex];
+                const newMessageIndex = Math.floor(this.simProgress.percent / CONFIG.PROGRESS.MESSAGE_CHANGE_PERCENT) % CONFIG.PROGRESS_MESSAGES.length;
+                if (newMessageIndex !== this.simProgress.messageIndex) {
+                    this.simProgress.messageIndex = newMessageIndex;
+                    msg = CONFIG.PROGRESS_MESSAGES[this.simProgress.messageIndex];
+                } else {
+                    msg = this.elements.loadingStage.textContent;
+                }
             } else {
                 // Залишаємо попереднє повідомлення
                 msg = this.elements.loadingStage.textContent;
             }
             
             this._renderProgress(this.simProgress.percent, msg);
-        }, CONFIG.PROGRESS.TICK_MS);
+        }, CONFIG.PROGRESS.CHECK_COMPLETION_MS);
     }
 
     // Запуск послідовних повідомлень на 99%

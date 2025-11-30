@@ -1,106 +1,107 @@
-# Portrait Processing Workflow App
+# Застосунок для обробки портретних фотографій
 
-A step-by-step in‑browser tool to prepare standardized portrait photographs for both web publication and high‑quality print (A6 105×148 mm at 300 DPI). All processing (background removal, cropping, export) happens locally in the browser for privacy.
+Покроковий браузерний інструмент для підготовки стандартизованих портретних фотографій для публікації на вебсайті та високоякісного друку (A6 105×148 мм при 300 DPI). Вся обробка (видалення фону, обрізка, експорт) відбувається локально у браузері для забезпечення приватності.
 
-## Features
-- In-browser background removal via `@imgly/background-removal` (WASM, no server).
-- Guided multi-step UX: Upload → Meta (position + name) → Crop Web → Crop Print → Export.
-- Distinct color backgrounds based on position:
+## Можливості
+- Видалення фону у браузері через `@imgly/background-removal` (WASM, без сервера).
+- Покроковий UX: Завантаження → Дані (посада + ім'я) → Обрізка для вебу → Обрізка для друку → Експорт.
+- Різні кольори фону залежно від посади:
   - Викладач: `#3C60AA`
   - Асистент: `#ACD6F3`
   - Аспірант: `#8CB8E4`
-- Web export: PNG 360×500 px.
-- Print export: JPG 1240×1748 px (exact 105mm × 148mm @ 300 DPI equivalent pixel dimensions).
-- PDF export: A6 page (105×148 mm) containing the print image.
-- ZIP bundle: `(<скорочена посада> <Ім'я>).zip` containing PNG, JPG, PDF.
-- Manual cropping for each stage using `CropperJS` with enforced aspect ratios.
-- Loading spinner while background removal runs.
+- Експорт для вебу: PNG 360×500 пікселів.
+- Експорт для друку: JPG 1240×1748 пікселів (точно 105мм × 148мм при 300 DPI).
+- Експорт PDF: сторінка A6 (105×148 мм) з зображенням для друку.
+- ZIP-архів: `(<скорочена посада> <Ім'я>).zip` з PNG, JPG, PDF.
+- Ручна обрізка для кожного етапу за допомогою `CropperJS` з фіксованими співвідношеннями сторін.
+- Прогресбар із гумористичними повідомленнями під час видалення фону.
 
-## Tech Stack
-- Vite (dev server & ES module bundling)
-- CropperJS (manual cropping UI)
-- JSZip (multi-file ZIP creation)
-- jsPDF (PDF generation at real physical dimensions)
-- @imgly/background-removal (foreground segmentation)
+## Технологічний стек
+- Vite (dev-сервер і ES-модульне збирання)
+- CropperJS (інтерфейс ручної обрізки)
+- JSZip (створення багатофайлових ZIP-архівів)
+- jsPDF (генерація PDF з реальними фізичними розмірами)
+- @imgly/background-removal (сегментація переднього плану)
 
-## Installation
+## Встановлення
 ```bash
 npm install
 ```
 
-## Development
+## Розробка
 ```bash
 npm run dev
 ```
-Open the printed URL (e.g. `http://localhost:5173` or fallback port). If 5173 is busy:
+Відкрийте надану URL-адресу (наприклад, `http://localhost:5173` або резервний порт). Якщо 5173 зайнятий:
 ```bash
 npm run dev -- --port 5181
 ```
 
-## Workflow Steps
-1. **Upload Photo** – Select an image; processing starts (spinner).
-2. **Enter Info** – Choose position, enter name (placeholder `Білецький Б.С.`).
-3. **Crop for Web** – Crop to 360×500 aspect; background applied.
-4. **Preview Web Result** – Confirm, move to print stage.
-5. **Crop for Print** – Crop to 105×148 mm aspect (final high-res).
-6. **Preview Print Result** – Export options appear.
-7. **Save Bundle** – Downloads ZIP with PNG (web), JPG (print), PDF (print). Shows success message.
-8. **Restart** – Start new photo.
+## Кроки робочого процесу
+1. **Завантаження фото** – Виберіть зображення; починається обробка (прогресбар).
+2. **Введення даних** – Виберіть посаду, введіть ім'я (підказка `Білецький Б.С.`).
+3. **Обрізка для вебу** – Обріжте до співвідношення 360×500; застосовується фон.
+4. **Перегляд результату для вебу** – Підтвердіть, перейдіть до етапу друку.
+5. **Обрізка для друку** – Обріжте до співвідношення 105×148 мм (фінальна висока роздільна здатність).
+6. **Перегляд результату для друку** – З'являються опції експорту.
+7. **Зберегти архів** – Завантажується ZIP з PNG (веб), JPG (друк), PDF (друк). Показується повідомлення про успіх.
+8. **Перезапуск** – Почніть нове фото.
 
-## File Naming Convention
+## Конвенція назв файлів
 ```
 (<скорочена посада>) (<Ім'я>) - на сайт.png
 (<скорочена посада>) (<Ім'я>) - на друк.jpg
 (<скорочена посада>) (<Ім'я>) - на друк.pdf
 (<скорочена посада>) (<Ім'я>).zip
 ```
-Short position codes:
+Коди скорочених посад:
 - викл.
 - ас.
 - асп.
 
-## DPI / Print Notes
-Browsers do not embed DPI metadata automatically in JPEG via Canvas. The pixel dimensions (1240×1748) correspond exactly to 105×148 mm at 300 DPI. PDF export uses physical millimeter units, ensuring print size integrity.
+## Нотатки щодо DPI / друку
+Браузери не вбудовують DPI-метадані автоматично в JPEG через Canvas. Пікселі (1240×1748) точно відповідають 105×148 мм при 300 DPI. Експорт PDF використовує фізичні одиниці в міліметрах, забезпечуючи цілісність розміру друку.
 
-## Licensing Considerations
-`@imgly/background-removal` is AGPL-licensed. If you distribute or deploy this app publicly and cannot comply with AGPL terms (e.g., source disclosure), obtain a commercial license from IMG.LY. Review their repository/license for details.
+## Ліцензування
+`@imgly/background-removal` ліцензований під AGPL. Якщо ви публічно розповсюджуєте або розгортаєте цей застосунок і не можете дотримуватися умов AGPL (наприклад, розкриття вихідного коду), отримайте комерційну ліцензію від IMG.LY. Перегляньте їхній репозиторій/ліцензію для деталей.
 
-## Potential Enhancements
-- Embed EXIF DPI metadata into JPG using a client-side EXIF manipulation library.
-- Add drag-and-drop upload.
-- Bulk processing queue.
-- Accessibility improvements (focus states, ARIA labels beyond spinner).
+## Потенційні покращення
+- Вбудовування EXIF DPI-метаданих у JPG за допомогою клієнтської EXIF-бібліотеки.
+- Додавання drag-and-drop завантаження.
+- Черга масової обробки.
+- Покращення доступності (стани фокуса, ARIA-мітки).
 
-## GitHub Deployment
-1. Create a new repository on GitHub (e.g. `portrait-workflow`).
-2. Initialize locally if not done:
+## Розгортання на GitHub
+1. Створіть новий репозиторій на GitHub (наприклад, `portrait-workflow`).
+2. Ініціалізуйте локально, якщо ще не зроблено:
    ```bash
    git init
    git add .
    git commit -m "Initial commit: portrait processing app"
    git branch -M main
-   git remote add origin https://github.com/<your-username>/<repo>.git
+   git remote add origin https://github.com/<ваш-username>/<repo>.git
    git push -u origin main
    ```
-3. For subsequent changes:
+3. Для наступних змін:
    ```bash
    git add .
    git commit -m "Update feature"
    git push
    ```
 
-## Folder Structure (key files)
+## Структура папок (ключові файли)
 ```
 prjct/
-  |- index.html        # Main application (multi-step UI)
-  |- package.json      # Dependencies & scripts
-  |- server.js         # Optional Node static server with COOP/COEP headers
+  |- src/               # Вихідні JS-модулі (app, ui, config, тощо)
+  |- styles/            # CSS-модулі (main, loading, тощо)
+  |- index.html         # Головний застосунок (багатокроковий UI)
+  |- package.json       # Залежності та скрипти
   |- README.md
   |- .gitignore
 ```
 
-## Browser Support
-Modern Chromium-based browsers recommended (WebAssembly + Offscreen performance). WebGPU/WebGL acceleration improves segmentation speed.
+## Підтримка браузерів
+Рекомендовані сучасні браузери на основі Chromium (WebAssembly + Offscreen для продуктивності). Апаратне прискорення WebGPU/WebGL покращує швидкість сегментації.
 
 ---
-Feel free to adjust branding, colors, or add logging as needed.
+Налаштовуйте брендинг, кольори або додавайте логування за потреби.
