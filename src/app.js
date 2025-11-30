@@ -73,16 +73,26 @@ export class App {
         console.log(`📁 [App] Завантажено файл: ${file.name}, розмір: ${(file.size / 1024 / 1024).toFixed(2)} MB, тип: ${file.type}`);
         this.state.uploadedFile = file;
         
+        // Флаг для відстеження завершення обробки
+        let processingComplete = false;
+        
         try {
             console.log('🔄 [App] Початок обробки фото');
             this.ui.showStep('1_5');
-            this.ui.startSimulatedProgress();
+            
+            // Запускаємо прогресбар з колбеком для перевірки завершення
+            this.ui.startSimulatedProgress(() => processingComplete);
             
             // Завантажуємо модель перед обробкою
             await preloadModel();
             
             this.state.processedBlob = await this.imageProcessor.removeBackground(file);
             console.log('✅ [App] Фон успішно видалено');
+            
+            // Встановлюємо флаг завершення
+            processingComplete = true;
+            
+            // На випадок якщо перевірка ще не спрацювала, зупиняємо вручну
             this.ui.finishSimulatedProgress();
             this.ui.showStep(2);
         } catch (error) {
